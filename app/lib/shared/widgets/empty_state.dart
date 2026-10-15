@@ -53,6 +53,22 @@ class EmptyState extends StatelessWidget {
           action: action,
         );
 
+  /// A link to a route that has been removed or never existed.
+  const EmptyState.routeNotFound({Key? key, Widget? action})
+      : this(
+          key: key,
+          message: 'Маршрут не найден. Возможно, водитель его отменил.',
+          action: action,
+        );
+
+  /// A path the application does not know.
+  const EmptyState.pageNotFound({Key? key, Widget? action})
+      : this(
+          key: key,
+          message: 'Такой страницы нет. Вернитесь к поиску рейсов.',
+          action: action,
+        );
+
   final String message;
   final Widget? action;
 

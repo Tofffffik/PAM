@@ -60,6 +60,35 @@ abstract final class AppTheme {
         titleTextStyle: textTheme.titleLarge,
       ),
       iconTheme: IconThemeData(color: colors.ink),
+      // Confirmations after a form is sent: ink plate, paper text, floating
+      // above the bottom navigation.
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: colors.ink,
+        contentTextStyle: AppTypography.body.copyWith(color: colors.paper),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.field),
+        ),
+      ),
+      // Text buttons of dialogs and pickers would take `primary` — lime on
+      // white is unreadable, so they are ink like the rest of the text.
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: colors.ink,
+          textStyle: AppTypography.button,
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.card),
+        ),
+        titleTextStyle: AppTypography.city.copyWith(color: colors.ink),
+        contentTextStyle: AppTypography.body.copyWith(color: colors.moss),
+      ),
       // Focus has to stay visible for keyboard navigation.
       focusColor: colors.ink.withValues(alpha: 0.12),
       textSelectionTheme: TextSelectionThemeData(

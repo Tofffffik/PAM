@@ -11,6 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Russian Material strings and the date / time pickers (from L3).
+  flutter_localizations:
+    sdk: flutter
 
   cupertino_icons: 1.0.8
 

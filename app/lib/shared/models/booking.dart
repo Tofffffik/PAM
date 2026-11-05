@@ -21,4 +21,15 @@ class Booking {
   final DateTime createdAt;
 
   bool get isActive => status == BookingStatus.active;
+
+  Booking copyWith({BookingStatus? status}) {
+    return Booking(
+      id: id,
+      routeId: routeId,
+      passengerId: passengerId,
+      seats: seats,
+      status: status ?? this.status,
+      createdAt: createdAt,
+    );
+  }
 }

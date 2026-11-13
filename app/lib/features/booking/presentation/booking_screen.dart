@@ -1,36 +1,113 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/router/app_routes.dart';
+import '../../../core/router/navigation.dart';
+import '../../../core/router/not_found_screen.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../shared/demo_data.dart';
+import '../../../data/repositories/booking_repository.dart';
 import '../../../shared/formatting.dart';
 import '../../../shared/models/route.dart' as model;
+import '../../../shared/state/catalog.dart';
 import '../../../shared/widgets/app_buttons.dart';
+import '../../../shared/widgets/load_failed.dart';
 import '../../../shared/widgets/seat_pips.dart';
+import '../../auth/domain/session_controller.dart';
 
 /// Choosing how many seats to take and confirming the booking.
 ///
-/// Nothing is written anywhere yet: the counter is local to the screen and
-/// the confirmation is the static end of the flow until L4.
-class BookingScreen extends StatefulWidget {
+/// The booking is written through [bookingsProvider]. A route that is sold out
+/// or driven by the user is not bookable: the screen sends the user back to the
+/// route, which explains why.
+class BookingScreen extends ConsumerStatefulWidget {
   const BookingScreen({super.key, required this.routeId});
 
   final String routeId;
 
   @override
-  State<BookingScreen> createState() => _BookingScreenState();
+  ConsumerState<BookingScreen> createState() => _BookingScreenState();
 }
 
-class _BookingScreenState extends State<BookingScreen> {
+class _BookingScreenState extends ConsumerState<BookingScreen> {
   int _seats = 1;
+  bool _saving = false;
   bool _confirmed = false;
+
+  Future<void> _confirm(model.Route route) async {
+    final String? userId = ref.read(sessionProvider)?.id;
+    if (userId == null) return;
+
+    setState(() => _saving = true);
+    try {
+      await ref.read(bookingsProvider.notifier).book(
+            routeId: route.id,
+            passengerId: userId,
+            seats: _seats,
+          );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _confirmed = true;
+      });
+    } on BookingRefused catch (refused) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_refusalMessage(refused))),
+      );
+    }
+  }
+
+  static String _refusalMessage(BookingRefused refused) {
+    switch (refused.reason) {
+      case BookingRefusal.notEnoughSeats:
+        return refused.seatsLeft == 0
+            ? 'Мест на этот рейс уже нет'
+            : 'Осталось только ${Formatting.seats(refused.seatsLeft)}';
+      case BookingRefusal.ownRoute:
+        return 'Нельзя забронировать свой маршрут';
+      case BookingRefusal.routeNotFound:
+        return 'Маршрут не найден';
+      case BookingRefusal.invalidSeats:
+        return 'Выберите от 1 до 12 мест';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppColors colors = context.colors;
-    final model.Route route = demoRouteById(widget.routeId);
-    final int free = route.freeSeats(demoBookings);
+    final AsyncValue<RouteBoard> boardAsync = ref.watch(routeBoardProvider);
+    final RouteBoard? board = boardAsync.value;
+
+    if (board == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Бронирование')),
+        body: boardAsync.hasError
+            ? const LoadFailed()
+            : const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final model.Route? route = board.routeById(widget.routeId);
+    if (route == null) return const NotFoundScreen(routeMissing: true);
+
+    final BookingBlock? block = bookingBlockFor(
+      route: route,
+      bookings: board.bookings,
+      userId: ref.watch(sessionProvider)?.id,
+    );
+    if (block != null && !_confirmed) {
+      // Back to the route, which shows why it cannot be booked.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go(AppRoutes.route(route.id));
+      });
+      return const Scaffold(body: SizedBox.shrink());
+    }
+
+    final int free = board.freeSeats(route);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Бронирование')),
@@ -46,7 +123,9 @@ class _BookingScreenState extends State<BookingScreen> {
           const SizedBox(height: Spacing.block),
           if (_confirmed)
             Text(
-              'Место забронировано',
+              _seats == 1
+                  ? 'Место забронировано'
+                  : 'Забронировано ${Formatting.seats(_seats)}',
               style: AppTypography.body.copyWith(color: colors.ok),
             )
           else ...<Widget>[
@@ -95,13 +174,13 @@ class _BookingScreenState extends State<BookingScreen> {
         child: _confirmed
             ? SecondaryButton(
                 label: 'Готово',
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => context.popOrGo(AppRoutes.route(route.id)),
               )
             : PrimaryButton(
                 label: _seats == 1
                     ? 'Забронировать место'
                     : 'Забронировать ${Formatting.seats(_seats)}',
-                onPressed: () => setState(() => _confirmed = true),
+                onPressed: _saving ? null : () => _confirm(route),
               ),
       ),
     );

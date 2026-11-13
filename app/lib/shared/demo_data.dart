@@ -2,8 +2,10 @@ import 'models/booking.dart';
 import 'models/route.dart';
 import 'models/user.dart';
 
-/// Hard-wired data the static screens are built on. It is replaced by the
-/// mock repositories at L4 and by the backend at L5.
+/// The seed data of the mock database (`data/mock/mock_store.dart`). The
+/// repositories never read it directly: they work on a copy held by the store,
+/// so changes made in the app do not touch these constants. The backend
+/// replaces the whole set at L5.
 ///
 /// Departure times are anchored to the current day so that the «Сегодня» and
 /// «Завтра» filters stay meaningful whenever the application is opened.
@@ -15,7 +17,13 @@ DateTime _startOfToday() {
 }
 
 DateTime _at(int dayOffset, int hour, int minute) {
-  return DateTime(_today.year, _today.month, _today.day + dayOffset, hour, minute);
+  return DateTime(
+    _today.year,
+    _today.month,
+    _today.day + dayOffset,
+    hour,
+    minute,
+  );
 }
 
 /// The signed-in student. Owns routes r5 and r10 as a driver and holds four
@@ -32,14 +40,6 @@ const List<User> demoDrivers = <User>[
   User(id: 'u3', name: 'Дана Чиботару', email: 'dana.cibotaru@student.utm.md'),
   User(id: 'u4', name: 'Сергей Лунгу', email: 'sergiu.lungu@student.utm.md'),
 ];
-
-/// Driver of a route, by id.
-User demoUserById(String id) {
-  return demoDrivers.firstWhere(
-    (User user) => user.id == id,
-    orElse: () => demoCurrentUser,
-  );
-}
 
 /// Ten routes on the real directions students take out of Chișinău.
 final List<Route> demoRoutes = <Route>[
@@ -232,25 +232,3 @@ final List<Booking> demoBookings = <Booking>[
   ),
 ];
 
-/// Bookings of the signed-in student, newest first.
-List<Booking> get demoMyBookings {
-  final List<Booking> mine = demoBookings
-      .where((Booking booking) => booking.passengerId == demoCurrentUser.id)
-      .toList();
-  mine.sort((Booking a, Booking b) => b.createdAt.compareTo(a.createdAt));
-  return mine;
-}
-
-/// Routes the signed-in student drives, by departure time.
-List<Route> get demoMyRoutes {
-  final List<Route> mine = demoRoutes
-      .where((Route route) => route.driverId == demoCurrentUser.id)
-      .toList();
-  mine.sort((Route a, Route b) => a.departureAt.compareTo(b.departureAt));
-  return mine;
-}
-
-/// Route by id; the static screens always ask for one that exists.
-Route demoRouteById(String id) {
-  return demoRoutes.firstWhere((Route route) => route.id == id);
-}

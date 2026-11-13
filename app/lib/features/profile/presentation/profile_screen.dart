@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/spacing.dart';
-import '../../../sandbox/sandbox_screen.dart';
-import '../../../shared/demo_data.dart';
 import '../../../shared/models/user.dart';
 import '../../../shared/widgets/app_buttons.dart';
+import '../../auth/domain/session_controller.dart';
 
 /// Account details and the way out of it.
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key, this.onSignOut});
-
-  final VoidCallback? onSignOut;
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final User? user = ref.watch(sessionProvider);
+    // Between sign-out and the redirect to /auth there is no user to show.
+    if (user == null) return const SizedBox.shrink();
+
     final AppColors colors = context.colors;
-    final User user = demoCurrentUser;
 
     return Scaffold(
       body: SafeArea(
@@ -46,8 +47,7 @@ class ProfileScreen extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     'Имя',
-                    style:
-                        AppTypography.caption.copyWith(color: colors.moss),
+                    style: AppTypography.caption.copyWith(color: colors.moss),
                   ),
                   const SizedBox(height: Spacing.xs),
                   Text(
@@ -57,8 +57,7 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: Spacing.lg),
                   Text(
                     'Почта',
-                    style:
-                        AppTypography.caption.copyWith(color: colors.moss),
+                    style: AppTypography.caption.copyWith(color: colors.moss),
                   ),
                   const SizedBox(height: Spacing.xs),
                   Text(
@@ -69,18 +68,10 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: Spacing.block),
-            // Temporary entry point to the component sandbox; it goes away
-            // once the router is in place at L3.
-            SecondaryButton(
-              label: 'Компоненты и состояния',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SandboxScreen(),
-                ),
-              ),
+            DangerButton(
+              label: 'Выйти',
+              onPressed: () => ref.read(sessionProvider.notifier).signOut(),
             ),
-            const SizedBox(height: Spacing.md),
-            DangerButton(label: 'Выйти', onPressed: onSignOut),
           ],
         ),
       ),

@@ -10,9 +10,11 @@ import 'seat_pips.dart';
 
 /// One trip in the search results.
 ///
-/// The departure time is set as large as a shop sign and never shrinks; the
-/// city pair gives way to an ellipsis instead. Rows carry no outline and no
-/// shadow — they are separated by an 8pt gap over the paper background.
+/// The departure time is set as large as a shop sign and never shrinks. The
+/// city pair has a line of its own under it: next to the time and the price
+/// there was room for barely one city on a phone, and the direction is what
+/// the passenger reads second. Rows carry no outline and no shadow — they are
+/// separated by an 8pt gap over the paper background.
 class RouteRow extends StatelessWidget {
   const RouteRow({
     super.key,
@@ -54,22 +56,20 @@ class RouteRow extends StatelessWidget {
                   style: AppTypography.timeHero.copyWith(color: colors.ink),
                   maxLines: 1,
                 ),
-                const SizedBox(width: Spacing.md),
-                Expanded(
-                  child: Text(
-                    '${route.fromCity} → ${route.toCity}',
-                    style: AppTypography.city.copyWith(color: colors.ink),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: Spacing.sm),
+                const Spacer(),
                 Text(
                   Formatting.price(route.price),
                   style: AppTypography.price.copyWith(color: colors.ink),
                   maxLines: 1,
                 ),
               ],
+            ),
+            const SizedBox(height: Spacing.xs),
+            Text(
+              '${route.fromCity} → ${route.toCity}',
+              style: AppTypography.city.copyWith(color: colors.ink),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: Spacing.xs),
             Row(

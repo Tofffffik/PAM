@@ -89,6 +89,12 @@ abstract final class AppTheme {
         titleTextStyle: AppTypography.city.copyWith(color: colors.ink),
         contentTextStyle: AppTypography.body.copyWith(color: colors.moss),
       ),
+      // The accent would vanish on the light paper: the spinner shown while
+      // the repositories answer is drawn in ink, like the text around it.
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colors.ink,
+        circularTrackColor: colors.edge,
+      ),
       // Focus has to stay visible for keyboard navigation.
       focusColor: colors.ink.withValues(alpha: 0.12),
       textSelectionTheme: TextSelectionThemeData(
